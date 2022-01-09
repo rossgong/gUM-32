@@ -1,0 +1,98 @@
+Notes from specification detailed at http://www.boundvariable.org/um-spec.txt
+
+Specs
+-32-bit "platters"
+    -Numbers are unsigned
+-8 General Purpose Registers that hold one platter
+-Collection of arrays of platters
+    -Unique 32-bit idenitfiers for each array
+    -a '0' array that stores the program
+-a 1x1 console to display and recieve 8-bit ascii glyphs
+-Scrolls are big-endian. 32-bytes are stored in 8-bit chunks with the most significant byte first
+
+Initialization
+-0 array set to provided program "scroll"
+-Registers all set to 0
+-Execution 'finger' set to the first platter of '0' arraay (offset 0)
+
+Cycle
+-Operator retrieved from platter at the execution finger
+-Execution finger advanced to next platter before operator is discharged
+
+Operators
+-14 possible operators
+-Operator described by the first 4 bits of instruction platter
+-Standard operators all share the same from
+    -OOOO XXXX XXXX XXXX XXXX XXXA AABB BCCC
+    -O denotes the operator number 
+    -A, B, C denote register numbers
+
+    Basic Operators
+    -They use all A B and C registers in the operator code
+    -Number is the operator number
+
+        Operator #0. Conditional Move
+        -IF C!=0:B->A 
+
+        Operator #1. Array Index
+        -Store value of index C in array B in A
+        -B[C]->A
+
+        Operator #2. Array Amendendment
+        -Store the value of C in array A at offset B
+        -A[B] = C
+
+        Operator #3. Addition
+        -Allows overflows with modulo stored
+        -(B+C)%(2^32)->A
+
+        Operator #4. Multiplication
+        -Allows overflows with modulo stored
+        -(B*C)%(2^32)->A
+
+        Operator #5. Division
+        -B/C->A if B/C exists
+
+        Operator #6. Not-and
+        -B NAND C -> A
+
+    Other Operators
+    -These do not use all of A B and/or C
+
+        Operator #7. Halt
+        -This stops the machine
+
+        Operator #8. Allocation
+        -Creates new array with capacity C.
+        -All platters are initialized with value 0
+        -New unique identifier is created and placed in B
+
+        Operator #9. Abandonment
+        -Array C is abandoned and it's identifier freed
+
+        Operator #10. Output
+        -The value of C is displayed values over 255 are not allowed
+
+        Operator #11. Input
+        -A value is taken from the console and stored in C. If it is end of input, C is filled with 1 bits
+
+        Operator #12. Load Program.
+        -Load the array B is duplicated into the 0 array
+        -Program finger is set to the C offset
+
+    Special Operator
+    -This operator has a different form than the rest
+    -The register number comes directly after the operator code, and then is followed by a 25-bit value
+    OOOO AAAV VVVV VVVV VVVV VVVV VVVV VVVV
+
+        Operator #13. Orthography
+        -V is loaded into A
+    
+Failing Conditions
+-No platter exists at execution finger
+-Tries to access outside an array or an array that doesn;t exist
+-Abandons an inactive array or the 0 array
+-Divides by zero
+-Tries to load program from inactive array
+-TRies to output a character above 255
+-Execution finger points to an invalid instruction
