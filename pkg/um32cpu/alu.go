@@ -158,6 +158,7 @@ func Load(a *Platter, b *Platter, c *Platter, collection *ArrayCollection) error
 
 //Operator #13. Orthography
 //Set a to be value provided by opcode
-func Ortho(a *Platter, v uint32) {
+func Ortho(a *Platter, v uint32) error {
 	*a = v
+	return nil
 }
