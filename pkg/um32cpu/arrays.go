@@ -22,7 +22,7 @@ func (collection *ArrayCollection) newArray(capacity Platter) (index Platter) {
 	return collection.nextSlot - 1
 }
 
-func (collection *ArrayCollection) getOperator(offset uint) Platter {
+func (collection *ArrayCollection) getOperator(offset Platter) Platter {
 	return collection.set[programArrayIndex][offset]
 }
 
@@ -38,5 +38,6 @@ func (collection *ArrayCollection) setArray(index Platter, array []Platter) {
 
 func CreateArrayCollection(program []Platter) (collection ArrayCollection) {
 	collection = *new(ArrayCollection)
+	collection.set = make(map[uint32][]uint32)
 	return
 }

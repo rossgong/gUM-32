@@ -26,7 +26,7 @@ type (
 
 type CPU struct {
 	//Array offset for program (PC)
-	finger    uint
+	finger    Platter
 	running   bool
 	registers [registerAmount]Platter
 
@@ -45,6 +45,7 @@ type Operation struct {
 
 func InitializeCPU(program []Platter) (cpu CPU) {
 	cpu = CPU{}
+	cpu.arrays = CreateArrayCollection(program)
 	cpu.arrays.setArray(programArrayIndex, program)
 	cpu.running = true
 
@@ -55,7 +56,7 @@ func (cpu *CPU) Cycle() error {
 	operatorCode := cpu.arrays.getOperator(cpu.finger)
 	cpu.finger++
 
-	op, err := decode(operatorCode)
+	op, err := decode(operatorCode, cpu)
 	if err == nil {
 		if op.isOrtho {
 			return Ortho(&cpu.registers[op.a], op.v)
@@ -66,7 +67,7 @@ func (cpu *CPU) Cycle() error {
 	return err
 }
 
-func decode(opCode Platter) (Operation, error) {
+func decode(opCode Platter, cpu *CPU) (Operation, error) {
 	//Mask out all non-opcode bits
 	operatorNumber := opCode & operatorMask
 	op := Operation{}
@@ -108,6 +109,7 @@ func decode(opCode Platter) (Operation, error) {
 		case 0xB000_0000:
 			op.operator = Input
 		case 0xC000_0000:
+			cpu.finger = cpu.registers[op.c]
 			op.operator = Load
 		}
 	}
