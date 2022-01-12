@@ -1,8 +1,22 @@
 package um32cpu
 
+import "fmt"
+
 const (
 	registerAmount    = 8
 	programArrayIndex = 0
+
+	//These are the shifts needed to get the relevant operator number
+	registerShiftA = 6
+	registerShiftB = 3
+	//registerShiftC = 0 unused as it is 0 just mask
+
+	orthoShiftA = 25
+
+	//Bit masks
+	registerMask   = 0x0000_0007 //Shift and then mask
+	operatorMask   = 0xF000_0000
+	orthoValueMask = 0x01FF_FFFF
 )
 
 type (
@@ -21,9 +35,9 @@ type CPU struct {
 
 type Operation struct {
 	operator OperatorFunction
-	a        *Platter
-	b        *Platter
-	c        *Platter
+	a        byte
+	b        byte
+	c        byte
 
 	isOrtho bool
 	v       Platter
@@ -41,17 +55,62 @@ func (cpu *CPU) Cycle() error {
 	operatorCode := cpu.arrays.getOperator(cpu.finger)
 	cpu.finger++
 
-	operation, err := decode(operatorCode)
+	op, err := decode(operatorCode)
 	if err == nil {
-		if operation.isOrtho {
-			return Ortho(operation.a, operation.v)
+		if op.isOrtho {
+			return Ortho(&cpu.registers[op.a], op.v)
 		} else {
-			return operation.operator(operation.a, operation.b, operation.c, &cpu.arrays)
+			return op.operator(&cpu.registers[op.a], &cpu.registers[op.b], &cpu.registers[op.c], &cpu.arrays)
 		}
 	}
 	return err
 }
 
 func decode(opCode Platter) (Operation, error) {
-	return Operation{}, nil
+	//Mask out all non-opcode bits
+	operatorNumber := opCode & operatorMask
+	op := Operation{}
+
+	//No operator above ortho
+	if operatorNumber > 0xD000_0000 {
+		return op, fmt.Errorf("FAIL in decode: Platter %b is an invalid operation", opCode)
+	} else if operatorNumber == 0xD000_0000 {
+		op.isOrtho = true
+		op.v = opCode & orthoValueMask
+		op.a = byte((opCode >> orthoShiftA) & registerMask)
+	} else {
+		op.a = byte((opCode >> registerShiftA) & registerMask)
+		op.b = byte((opCode >> registerShiftB) & registerMask)
+		op.c = byte(opCode & registerMask)
+		switch operatorNumber {
+		case 0x0000_0000:
+			op.operator = Move
+		case 0x1000_0000:
+			op.operator = Index
+		case 0x2000_0000:
+			op.operator = Amend
+		case 0x3000_0000:
+			op.operator = Add
+		case 0x4000_0000:
+			op.operator = Multiply
+		case 0x5000_0000:
+			op.operator = Division
+		case 0x6000_0000:
+			op.operator = NAnd
+		case 0x7000_0000:
+			op.operator = Halt
+		case 0x8000_0000:
+			op.operator = Allocate
+		case 0x9000_0000:
+			op.operator = Abandon
+		case 0xA000_0000:
+			op.operator = Output
+		case 0xB000_0000:
+			op.operator = Input
+		case 0xC000_0000:
+			op.operator = Load
+		}
+	}
+
+	return op, nil
 }
