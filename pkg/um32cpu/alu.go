@@ -146,7 +146,6 @@ func Input(a *Platter, b *Platter, c *Platter, collection *ArrayCollection) erro
 //Operator #12. Load Program
 //Load array B into program array (0) and set offset to C
 func Load(a *Platter, b *Platter, c *Platter, collection *ArrayCollection) error {
-	fmt.Printf("a:%v b:%v c:%v\n", *a, *b, *c)
 	_, exists := collection.set[*b]
 
 	if exists {
