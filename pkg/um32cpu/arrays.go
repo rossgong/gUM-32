@@ -22,10 +22,14 @@ func (collection *ArrayCollection) newArray(capacity Platter) (index Platter) {
 	return collection.nextSlot - 1
 }
 
+func (collection *ArrayCollection) getOperator(offset uint) Platter {
+	return collection.set[programArrayIndex][offset]
+}
+
 func (collection *ArrayCollection) LoadProgramArray(arrayIndex Platter) {
 	newProgram := make([]Platter, len(collection.set[arrayIndex]))
 	copy(newProgram, collection.set[arrayIndex])
-	collection.set[0] = newProgram
+	collection.setArray(programArrayIndex, newProgram)
 }
 
 func (collection *ArrayCollection) setArray(index Platter, array []Platter) {
