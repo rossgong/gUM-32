@@ -2,6 +2,8 @@ package um32cpu
 
 import (
 	"fmt"
+	"io"
+	"os"
 )
 
 //See notes.txt for personal notes documenting the spec
@@ -120,16 +122,24 @@ func Abandon(a *Platter, b *Platter, c *Platter, collection *ArrayCollection) er
 //display character in register C
 func Output(a *Platter, b *Platter, c *Platter, collection *ArrayCollection) error {
 	if *c > 255 {
-		//TODO: Fail
+		return fmt.Errorf("FAIL on operator \"Output\": register is above 255")
 	}
-	//TODO: Implement ouputs
+	fmt.Printf("%c", *c)
 	return nil
 }
 
 //Operator #11. Input
 //Takes input from console into C. If it is end of input, C is filled with 1s
 func Input(a *Platter, b *Platter, c *Platter, collection *ArrayCollection) error {
-	//TODO: Implement inputs
+	input := make([]byte, 1)
+	_, err := os.Stdin.Read(input)
+	if err == io.EOF {
+		*c = ^(Platter(0))
+	} else if err == nil {
+		*c = Platter(input[0])
+	} else {
+		return fmt.Errorf("FAIL on operator \"Input\":" + err.Error())
+	}
 	return nil
 }
 
