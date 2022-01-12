@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"gongaware.org/gUM-32/pkg/um32cpu"
+	"gongaware.org/gUM32/pkg/um32cpu"
 )
 
 func Parse(file *os.File) ([]um32cpu.Platter, error) {

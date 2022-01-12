@@ -1,3 +1,3 @@
-module gongaware.org/gUM-32
+module gongaware.org/gUM32
 
 go 1.17
