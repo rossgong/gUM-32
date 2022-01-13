@@ -41,6 +41,9 @@ type Operation struct {
 
 	isOrtho bool
 	v       Platter
+
+	//This is here to prevent having the decode instruction needing a CPU object
+	isLoad bool
 }
 
 func (cpu CPU) GetLastOperation() Platter {
@@ -61,18 +64,21 @@ func (cpu *CPU) Cycle() error {
 	operatorCode := cpu.arrays.programArray[cpu.finger]
 	cpu.finger++
 
-	op, err := decode(operatorCode, cpu)
+	op, err := decode(operatorCode)
 	if err == nil {
 		if op.isOrtho {
 			return Ortho(&cpu.registers[op.a], op.v)
 		} else {
+			if op.isLoad {
+				cpu.finger = cpu.registers[op.c]
+			}
 			return op.operator(&cpu.registers[op.a], &cpu.registers[op.b], &cpu.registers[op.c], cpu.arrays)
 		}
 	}
 	return err
 }
 
-func decode(opCode Platter, cpu *CPU) (Operation, error) {
+func decode(opCode Platter) (Operation, error) {
 	//Mask out all non-opcode bits
 	operatorNumber := opCode & operatorMask
 	op := Operation{}
@@ -114,7 +120,7 @@ func decode(opCode Platter, cpu *CPU) (Operation, error) {
 		case 0xB000_0000:
 			op.operator = Input
 		case 0xC000_0000:
-			cpu.finger = cpu.registers[op.c]
+			op.isLoad = true
 			op.operator = Load
 		}
 	}
