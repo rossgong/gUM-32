@@ -27,9 +27,18 @@ func (collection *ArrayCollection) getOperator(offset Platter) Platter {
 }
 
 func (collection *ArrayCollection) LoadProgramArray(arrayIndex Platter) {
-	newProgram := make([]Platter, len(collection.set[arrayIndex]))
-	copy(newProgram, collection.set[arrayIndex])
-	collection.setArray(programArrayIndex, newProgram)
+	futureProgram := collection.set[arrayIndex]
+	numChanged := copy(collection.set[programArrayIndex], futureProgram)
+
+	//If the array was fully copied make sure to get rid of the rest
+	//If the numChanged is less than the source array, append the rest
+	//This is to prevent maving to make new backing arrays every time
+	//This is a very large speedup
+	if numChanged == len(futureProgram) {
+		collection.set[programArrayIndex] = collection.set[programArrayIndex][:numChanged]
+	} else {
+		collection.set[programArrayIndex] = append(collection.set[programArrayIndex], futureProgram[numChanged:]...)
+	}
 }
 
 func (collection *ArrayCollection) setArray(index Platter, array []Platter) {
