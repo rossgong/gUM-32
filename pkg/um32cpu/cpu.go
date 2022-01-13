@@ -43,6 +43,10 @@ type Operation struct {
 	v       Platter
 }
 
+func (cpu CPU) GetLastOperation() Platter {
+	return cpu.arrays.getOperator(cpu.finger - 1)
+}
+
 func InitializeCPU(program []Platter) (cpu CPU) {
 	cpu = CPU{}
 	cpu.arrays = CreateArrayCollection(program)
