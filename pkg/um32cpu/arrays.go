@@ -3,6 +3,9 @@ package um32cpu
 type ArrayCollection struct {
 	set map[Platter][]Platter
 
+	//Have a seperate Program array to prevent a map lookup every cycle
+	programArray []Platter
+
 	nextSlot Platter
 }
 
@@ -22,31 +25,33 @@ func (collection *ArrayCollection) newArray(capacity Platter) (index Platter) {
 	return collection.nextSlot - 1
 }
 
-func (collection *ArrayCollection) getOperator(offset Platter) Platter {
-	return collection.set[programArrayIndex][offset]
-}
-
 func (collection *ArrayCollection) LoadProgramArray(arrayIndex Platter) {
 	futureProgram := collection.set[arrayIndex]
-	numChanged := copy(collection.set[programArrayIndex], futureProgram)
+	numChanged := copy(collection.programArray, futureProgram)
 
 	//If the array was fully copied make sure to get rid of the rest
 	//If the numChanged is less than the source array, append the rest
 	//This is to prevent maving to make new backing arrays every time
 	//This is a very large speedup
 	if numChanged == len(futureProgram) {
-		collection.set[programArrayIndex] = collection.set[programArrayIndex][:numChanged]
+		collection.programArray = collection.programArray[:numChanged]
 	} else {
-		collection.set[programArrayIndex] = append(collection.set[programArrayIndex], futureProgram[numChanged:]...)
+		collection.programArray = append(collection.programArray, futureProgram[numChanged:]...)
 	}
+	collection.set[0] = collection.programArray
 }
 
 func (collection *ArrayCollection) setArray(index Platter, array []Platter) {
 	collection.set[index] = array
 }
 
-func CreateArrayCollection(program []Platter) (collection ArrayCollection) {
-	collection = *new(ArrayCollection)
+func CreateArrayCollection(program []Platter) (collection *ArrayCollection) {
+	collection = new(ArrayCollection)
 	collection.set = make(map[uint32][]uint32)
+	collection.nextSlot = 1
+	//Put dummy array to prevent this slot from being used as 0 is the programArray
+	//collection set 0 will always be a shallow copy of this
+	collection.programArray = program
+	collection.set[0] = collection.programArray
 	return
 }

@@ -30,7 +30,7 @@ type CPU struct {
 	running   bool
 	registers [registerAmount]Platter
 
-	arrays ArrayCollection
+	arrays *ArrayCollection
 }
 
 type Operation struct {
@@ -44,11 +44,11 @@ type Operation struct {
 }
 
 func (cpu CPU) GetLastOperation() Platter {
-	return cpu.arrays.getOperator(cpu.finger - 1)
+	return cpu.arrays.programArray[cpu.finger-1]
 }
 
-func InitializeCPU(program []Platter) (cpu CPU) {
-	cpu = CPU{}
+func InitializeCPU(program []Platter) (cpu *CPU) {
+	cpu = new(CPU)
 	cpu.arrays = CreateArrayCollection(program)
 	cpu.arrays.setArray(programArrayIndex, program)
 	cpu.running = true
@@ -57,7 +57,8 @@ func InitializeCPU(program []Platter) (cpu CPU) {
 }
 
 func (cpu *CPU) Cycle() error {
-	operatorCode := cpu.arrays.getOperator(cpu.finger)
+
+	operatorCode := cpu.arrays.programArray[cpu.finger]
 	cpu.finger++
 
 	op, err := decode(operatorCode, cpu)
@@ -65,7 +66,7 @@ func (cpu *CPU) Cycle() error {
 		if op.isOrtho {
 			return Ortho(&cpu.registers[op.a], op.v)
 		} else {
-			return op.operator(&cpu.registers[op.a], &cpu.registers[op.b], &cpu.registers[op.c], &cpu.arrays)
+			return op.operator(&cpu.registers[op.a], &cpu.registers[op.b], &cpu.registers[op.c], cpu.arrays)
 		}
 	}
 	return err
